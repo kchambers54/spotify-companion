@@ -81,10 +81,13 @@ if token:
                         else:
                             topTracksList.append(artistTrack['id'])
             #add all songs to playlist
-            if playlistExists == True:
-                sp.user_playlist_add_tracks(sp.current_user()['id'], oldPlaylistID, topTracksList)
-            else:
-                sp.user_playlist_add_tracks(sp.current_user()['id'], newPlaylist['id'], topTracksList)
+            i = 0
+            while i*100 < len(topTracksList):
+                if playlistExists == True:
+                    sp.user_playlist_add_tracks(sp.current_user()['id'], oldPlaylistID, topTracksList[0+(i*100) : 99+(i*100)] )
+                else:
+                    sp.user_playlist_add_tracks(sp.current_user()['id'], newPlaylist['id'], topTracksList[0+(i*100) : 99+(i*100)] )
+                i= i+1
     if foundPlaylist == False:
         print("We were unable to find a playlist with the name specified")
 
