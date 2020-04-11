@@ -80,7 +80,7 @@ if token:
                             print("song already in list, not including")
                         else:
                             topTracksList.append(artistTrack['id'])
-                #add all songs to playlist
+            #add all songs to playlist
             if playlistExists == True:
                 sp.user_playlist_add_tracks(sp.current_user()['id'], oldPlaylistID, topTracksList)
             else:
