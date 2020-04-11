@@ -67,21 +67,25 @@ if token:
                 print("creating new playlist")
                 newPlaylist = sp.user_playlist_create(sp.current_user()['id'], "Top Artist Tracks from " + sourcePlaylist)
             #get the songs from the playlist into the for loop
+            topArtistList = []
             topTracksList = []
             for track in playlist['tracks']['items']:
-                #print(track['track']['artists'][0]['id'])
-                topTracks = get_artist_top_tracks_from_track(track);
+                if track['track']['artists'][0]['id'] in topArtistList:
+                    print("Artist already included")
+                else:
+                    topArtistList.append(track['track']['artists'][0]['id'])
+                
+                topTracks = get_artist_top_tracks_from_track(track)
                 #grab each track from the top tracks of a specific artist
                 for i, artistTrack in enumerate(topTracks['tracks']):
                     #print(artistTrack)
                     #put into list that will be all added to a playlist at once
                     if(i < int(numOfSongsPerArtist)):
-                        if artistTrack['id'] in topTracksList:
-                            print("song already in list, not including")
-                        else:
-                            topTracksList.append(artistTrack['id'])
+                        topTracksList.append(artistTrack['id'])
+                            
             #add all songs to playlist
             i = 0
+            print(len(topTracksList))
             while i*100 < len(topTracksList):
                 if playlistExists == True:
                     sp.user_playlist_add_tracks(sp.current_user()['id'], oldPlaylistID, topTracksList[0+(i*100) : 99+(i*100)] )
