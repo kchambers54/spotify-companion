@@ -10,10 +10,10 @@ def show_tracks(results):
             (i, track['artists'][0]['name'], track['name']))
 
 #takes a song provided, and goes and pulls the first artist credited out
-def get_artist_top_tracks_from_track(track):
-    artist = track['track']['artists'][0]['id']
-    topTracks = sp.artist_top_tracks(artist)
-    return topTracks
+def get_artist_top_track_ids_from_track(artist, numOfSongsPerArtist):
+    topTrackIds = [track['id'] for track in sp.artist_top_tracks(artist)['tracks']]
+    print(topTrackIds)
+    return topTrackIds[0:numOfSongsPerArtist]
         
 
 #Need to add Logging code at some point instead of print statements
@@ -21,11 +21,10 @@ scope = 'playlist-modify-public playlist-read-private'
 
 if len(sys.argv) > 2:
     username = sys.argv[1]
-    sourcePlaylist = sys.argv[2]
+    sourcePlaylistString = sys.argv[2]
     if len(sys.argv) > 3:
         try:
-            int(sys.argv[3])
-            numOfSongsPerArtist = sys.argv[3]
+            numOfSongsPerArtist = int(sys.argv[3])
         except:
             print("%s is not a valid number between 0 and 10, defaulting to 10", sys.argv[3])
             numOfSongsPerArtist = 10
@@ -39,53 +38,71 @@ token = util.prompt_for_user_token(username, scope)
 if token:
     sp = spotipy.Spotify(auth=token)
     sp.trace = False
-    results = sp.current_user_playlists(limit=50)
+    currentUserPlaylists = sp.current_user_playlists(limit=50)
     foundPlaylist = False
     playlistExists = False
     oldPlaylistID = 0
     
     #Check to make sure playlist doesn't already exist, if so delete songs from it
-    for i, item in enumerate(results['items']):
-        if item['name'] == "Top Artist Tracks from " + sourcePlaylist:
+    for playlist in currentUserPlaylists['items']:
+        if playlist['name'] == "Top Artist Tracks from " + sourcePlaylistString:
             print("Top Artist Tracks Playlist has already been created, deleting and replacing")
-            oldPlaylistID = item['id']
+            oldPlaylistID = playlist['id']
             playlistExists = True
-            oldPlaylist = sp.playlist(item['id'], fields="tracks,next")
-            #print(oldPlaylist['tracks']['items'])
             tracksToDelete = []
-            for track in oldPlaylist['tracks']['items']:
+            oldPlaylist = sp.playlist(playlist['id'], fields="tracks,next")
+            tracks = oldPlaylist['tracks']
+            #print(oldPlaylist['tracks']['items'])
+            for track in tracks['items']:
                 tracksToDelete.append(track['track']['id'])
-            sp.user_playlist_remove_all_occurrences_of_tracks(sp.current_user()['id'], item['id'], tracksToDelete)
+                
+            while tracks['next'] is not None:
+                tracks = sp.next(tracks)
+                #print(oldPlaylist['tracks']['items'])
+                for track in tracks['items']:
+                    tracksToDelete.append(track['track']['id'])
+
+            i = 0
+            print("number of tracks to delete is " + str(len(tracksToDelete)))
+            while i*100 < len(tracksToDelete):
+                sp.user_playlist_remove_all_occurrences_of_tracks(sp.current_user()['id'], playlist['id'], tracksToDelete[0+(i*100) : 99+(i*100)] )
+                i= i+1
+
     #search through all user playlists and find the one with same name as the argument provided
-    for i, item in enumerate(results['items']):
-        if item['name'] == sourcePlaylist:
+    for playlist in currentUserPlaylists['items']:
+        if playlist['name'] == sourcePlaylistString:
             foundPlaylist = True
-            #grab correct playlist out of results
-            playlist = sp.playlist(item['id'], fields="tracks,next")
+            #grab correct playlist out of currentUserPlaylists
+            sourcePlaylist = sp.playlist(playlist['id'], fields="tracks,next")
             #print(sp.current_user())
             if playlistExists == False:
                 print("creating new playlist")
-                newPlaylist = sp.user_playlist_create(sp.current_user()['id'], "Top Artist Tracks from " + sourcePlaylist)
+                newPlaylist = sp.user_playlist_create(sp.current_user()['id'], "Top Artist Tracks from " + sourcePlaylistString)
             #get the songs from the playlist into the for loop
-            topArtistList = []
-            topTracksList = []
-            for track in playlist['tracks']['items']:
+            topArtistList = []  # A list of artist dicts
+            topTracksList = []  # A list of track dicts
+            for track in sourcePlaylist['tracks']['items']:
+                #get the artist out of the track
                 if track['track']['artists'][0]['id'] in topArtistList:
                     print("Artist already included")
                 else:
                     topArtistList.append(track['track']['artists'][0]['id'])
+
+            for artist in topArtistList:
+
+                topTracks = get_artist_top_track_ids_from_track(artist, numOfSongsPerArtist)
+                topTracksList.extend(topTracks)
                 
-                topTracks = get_artist_top_tracks_from_track(track)
                 #grab each track from the top tracks of a specific artist
-                for i, artistTrack in enumerate(topTracks['tracks']):
-                    #print(artistTrack)
-                    #put into list that will be all added to a playlist at once
-                    if(i < int(numOfSongsPerArtist)):
-                        topTracksList.append(artistTrack['id'])
+                # for i, artistTrack in enumerate(topTracks['tracks']):
+                #     #print(artistTrack)
+                #     #put into list that will be all added to a playlist at once
+                #     if(i < int(numOfSongsPerArtist)):
+                #         topTracksList.append(artistTrack['id'])
                             
             #add all songs to playlist
             i = 0
-            print(len(topTracksList))
+            print("length of top tracks list is " + str(len(topTracksList)))
             while i*100 < len(topTracksList):
                 if playlistExists == True:
                     sp.user_playlist_add_tracks(sp.current_user()['id'], oldPlaylistID, topTracksList[0+(i*100) : 99+(i*100)] )
