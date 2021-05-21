@@ -1,4 +1,5 @@
 import base64, json, requests
+from SpotToken import SpotToken
 
 SPOTIFY_URL_AUTH = 'https://accounts.spotify.com/authorize/?'
 SPOTIFY_URL_TOKEN = 'https://accounts.spotify.com/api/token/'
@@ -6,9 +7,11 @@ RESPONSE_TYPE = 'code'
 HEADER = 'application/x-www-form-urlencoded'
 REFRESH_TOKEN = ''
     
+
 def getAuth(client_id, redirect_uri, scope):
     data = "{}client_id={}&response_type=code&redirect_uri={}&scope={}".format(SPOTIFY_URL_AUTH, client_id, redirect_uri, scope) 
     return data
+
 
 def getToken(code, client_id, client_secret, redirect_uri):
     body = {
@@ -19,24 +22,20 @@ def getToken(code, client_id, client_secret, redirect_uri):
         "client_secret": client_secret
     }
     
-    # MODIFIED #
-    auth_str = bytes('{}:{}'.format(client_id, client_secret), 'utf-8')
-    encoded = base64.b64encode(auth_str).decode('utf-8')
-    # END MODIFIED #
-    
-    headers = {"Content-Type" : HEADER, "Authorization" : "Basic {}".format(encoded)} 
+    auth_header = get_auth_header(client_id, client_secret) 
 
-    print(headers)
-    print(redirect_uri)
-    post = requests.post(SPOTIFY_URL_TOKEN, params=body, headers=headers)
-    print(post.text)
+    post = requests.post(SPOTIFY_URL_TOKEN, params=body, headers=auth_header)
+
     return handleToken(json.loads(post.text))
     
+
 def handleToken(response):
-    # TODO May need to return REFRESH_TOKEN so that it can be stored in datastore
-    auth_head = {"Authorization": "Bearer {}".format(response["access_token"])}
-    REFRESH_TOKEN = response["refresh_token"]
-    return [response["access_token"], auth_head, response["scope"], response["expires_in"]]
+    # TODO Need to return REFRESH_TOKEN too so that it can be stored in datastore
+    token_object = SpotToken(response)
+
+    # return [response["access_token"], auth_head, response["scope"], response["expires_in"]]
+    return token_object
+
 
 def refreshAuth():
     body = {
@@ -44,7 +43,16 @@ def refreshAuth():
         "refresh_token" : REFRESH_TOKEN
     }
 
-    post_refresh = requests.post(SPOTIFY_URL_TOKEN, data=body, headers=HEADER)
+    auth_header = get_auth_header(client_id, client_secret)
+
+    post_refresh = requests.post(SPOTIFY_URL_TOKEN, data=body, headers=auth_header)
     p_back = json.dumps(post_refresh.text)
     
     return handleToken(p_back)
+
+
+def get_auth_header(client_id, client_secret):
+    auth_str = bytes('{}:{}'.format(client_id, client_secret), 'utf-8')
+    encoded_id_and_secret = base64.b64encode(auth_str).decode('utf-8')
+    
+    return {"Content-Type" : HEADER, "Authorization" : "Basic {}".format(encoded_id_and_secret)}
