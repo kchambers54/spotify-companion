@@ -2,10 +2,10 @@ from flask_spotify_auth import getAuth, refreshAuth, getToken
 from SpotToken import SpotToken
 
 #Add your client ID TODO Remove
-CLIENT_ID = "a9d83f4e8e0d4276bd0f49f86fd8a0a9"
+CLIENT_ID = "XX"
 
 #aDD YOUR CLIENT SECRET FROM SPOTIFY TODO Remove
-CLIENT_SECRET = "611bf898debf40db95ffdb3d136b91d8"
+CLIENT_SECRET = "XX"
 
 #Port and callback url can be changed or ledt to localhost:5000
 PORT = "5000"
