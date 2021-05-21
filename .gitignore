@@ -1,6 +1,7 @@
 # CUSTOM
 testing/
 .cache-*
+**/config.py
 
 
 # Byte-compiled / optimized / DLL files
