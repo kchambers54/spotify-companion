@@ -8,11 +8,12 @@ import spotipy.util
 
 sys.path.append('FlaskSpotifyAuth/')
 import startup
+import config
 
 from flask import Flask, redirect, request, session
 
 app = Flask(__name__)
-app.secret_key = 'LKsdfsdf897769879sDSFSDFsdfsdkljdfhgkKLJHLKJH897687f'  # TODO - externalize
+app.secret_key = config.APP_SECRET_KEY
 
 
 @app.route('/')
@@ -34,7 +35,7 @@ def auth_request():
     """
     Requests authorization to access user's data
     """
-    response = startup.getUser()
+    response = startup.getUserCode()
     return redirect(response)
 
 @app.route('/auth/callback/')

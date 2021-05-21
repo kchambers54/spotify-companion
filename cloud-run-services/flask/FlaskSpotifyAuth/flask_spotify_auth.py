@@ -30,10 +30,8 @@ def getToken(code, client_id, client_secret, redirect_uri):
     
 
 def handleToken(response):
-    # TODO Need to return REFRESH_TOKEN too so that it can be stored in datastore
     token_object = SpotToken(response)
 
-    # return [response["access_token"], auth_head, response["scope"], response["expires_in"]]
     return token_object
 
 
