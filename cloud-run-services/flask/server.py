@@ -10,7 +10,7 @@ sys.path.append('FlaskSpotifyAuth/')
 import startup
 import config
 sys.path.append('Functions')
-import new_playlist_with_previous_artists
+import playlist_expander
 
 from flask import Flask, redirect, request, session
 
@@ -80,11 +80,11 @@ def call_playlist_expander():
 
         source_playlist_name = request.args.get('source_playlist_name')
         try:  # Default = 10
-            num_tracks_per_artist = request.args['num_tracks']
+            num_tracks_per_artist = int(request.args['num_tracks'])
         except:
             num_tracks_per_artist = 10
 
-        function_response = new_playlist_with_previous_artists.execute(session.get('token_data').get('access_token'), source_playlist_name, num_tracks_per_artist)
+        function_response = playlist_expander.execute(session.get('token_data').get('access_token'), source_playlist_name, num_tracks_per_artist)
 
         return function_response
     else:
