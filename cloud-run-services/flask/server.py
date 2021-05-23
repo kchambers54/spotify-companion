@@ -8,11 +8,14 @@ import spotipy.util
 
 sys.path.append('FlaskSpotifyAuth/')
 import startup
+import config
+sys.path.append('Functions')
+import playlist_expander
 
 from flask import Flask, redirect, request, session
 
 app = Flask(__name__)
-app.secret_key = 'LKsdfsdf897769879sDSFSDFsdfsdkljdfhgkKLJHLKJH897687f'  # TODO - externalize
+app.secret_key = config.APP_SECRET_KEY
 
 
 @app.route('/')
@@ -21,6 +24,7 @@ def index():
     Return 
     """
     try:
+        # Temporary
         return session['token_data']
     except:
 
@@ -34,7 +38,7 @@ def auth_request():
     """
     Requests authorization to access user's data
     """
-    response = startup.getUser()
+    response = startup.getUserCode()
     return redirect(response)
 
 @app.route('/auth/callback/')
@@ -50,7 +54,7 @@ def token_request():
     print('Token Data:\n')
     print(token_data, file=sys.stderr)
 
-    # Save token data to session
+    # Save token data to session for now TODO: store somewhere backend
     session['token_data'] = token_data.get_dict()
 
     # redirect to homepage
@@ -68,7 +72,24 @@ def auth_logout():
 #############
 @app.route('/functions/playlist-expander/')
 def call_playlist_expander():
-    return  # call the custom spotipy function here and pass the user's token
+    """
+    Call the "playlist expander" function, creating a new playlist with the top X 
+    songs from each artist in an existing playlist
+    """
+    if session.get('token_data') is not None:
+
+        source_playlist_name = request.args.get('source_playlist_name')
+        try:  # Default = 10
+            num_tracks_per_artist = int(request.args['num_tracks'])
+        except:
+            num_tracks_per_artist = 10
+
+        function_response = playlist_expander.execute(session.get('token_data').get('access_token'), source_playlist_name, num_tracks_per_artist)
+
+        return function_response
+    else:
+        print('No auth token available to call playlist expander')
+        return "No auth token available to call playlist expander.  Please login."
 
 ########
 # Main #

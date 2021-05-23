@@ -1,13 +1,14 @@
 from flask_spotify_auth import getAuth, refreshAuth, getToken
 from SpotToken import SpotToken
+import config
 
-#Add your client ID TODO Remove
-CLIENT_ID = "XX"
+# Client ID FROM SPOTIFY
+CLIENT_ID = config.CLIENT_ID
 
-#aDD YOUR CLIENT SECRET FROM SPOTIFY TODO Remove
-CLIENT_SECRET = "XX"
+# CLIENT SECRET FROM SPOTIFY
+CLIENT_SECRET = config.CLIENT_SECRET
 
-#Port and callback url can be changed or ledt to localhost:5000
+# Port and callback url can be changed or ledt to localhost:5000
 PORT = "5000"
 CALLBACK_URL = "http://localhost"
 
@@ -16,10 +17,8 @@ SCOPE = "playlist-modify-public playlist-read-private"
 
 #token_data will hold authentication header with access code, the allowed scopes, and the refresh countdown
 # TODO May need to externalize this to datastore
-# TOKEN_DATA = []
 
-
-def getUser():
+def getUserCode():
     return getAuth(CLIENT_ID, "{}:{}/auth/callback/".format(CALLBACK_URL, PORT), SCOPE)
 
 def getUserToken(code):
